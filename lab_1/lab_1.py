@@ -18,11 +18,12 @@
 
 '''
 import hashlib
+import sys
 from functools import partial
 import json
 import tkinter as tk
 from tkinter import messagebox
-
+counter = 0
 def check_certificate(window):
     with open('/media/valery/JOKER/certificate.txt', 'r') as read_file:
         certificate = read_file.read()
@@ -34,6 +35,19 @@ def check_certificate(window):
         hash_ = dk.hex()
         if str(hash_) == certificate:
             accounting([i, dict_of_user_information[i], window])
+
+def delete_user(login):
+    try:
+        global dict_of_user_information
+        dict_of_user_information.pop(login.get())
+        write_json_file('db.json')
+        dict_of_user_information = read_json_file('db.json')
+    except KeyError:
+        print('Неверный ключ')
+def check_correct_password(password):
+    if len(password) > 12:
+        template = r"a-zA-Zа-яА-Я0-9\+\-\*\/\$\!\@"
+
 
 def read_json_file(filename: str):
     global dict_of_user_information
@@ -70,7 +84,7 @@ def new_accounting(current_window):
     main()
 
 def accounting(lst: list):
-    global dict_of_user_information
+    global dict_of_user_information, counter
     if type(lst[0]) is str:
         login = lst[0]
         password = lst[1]
@@ -78,12 +92,12 @@ def accounting(lst: list):
         login = lst[0].get()
         password = lst[1].get()
     read_json_file('db.json')
-    if login in dict_of_user_information.keys():
+    if login in dict_of_user_information.keys() and password in dict_of_user_information.values():
         if login == "ADMIN" and password == '1234':
+            counter = 0
             lst[2].destroy()
-            messagebox.showinfo('ROCK!', 'Rock!!!!')
             window_in_system_admin = tk.Tk()
-            window_in_system_admin.geometry('300x500')
+            window_in_system_admin.geometry('400x500')
             window_in_system_admin.resizable(False, False)
             window_in_system_admin.title("ADMIN")
             label_admin_new_login = tk.Label(window_in_system_admin, text="Введите новый логин пользователя")
@@ -103,18 +117,25 @@ def accounting(lst: list):
             button_register = tk.Button(window_in_system_admin, text="Авторизоваться заново",
                                         command=partial(new_accounting, window_in_system_admin))
             button_register.pack()
-            button_get_information_about_users = tk.Button(window_in_system_admin, text="get_information",
+            label_delete_user = tk.Label(window_in_system_admin, text="Если хотите удалить пользователя, введите его логин").pack()
+            entry_delete_user = tk.Entry(window_in_system_admin)
+            entry_delete_user.pack()
+            button_delete_user = tk.Button(window_in_system_admin, text='Delete_user', command=partial(delete_user, entry_delete_user))
+            print(type(entry_delete_user))
+            button_delete_user.pack()
+            button_get_information_about_users = tk.Button(window_in_system_admin, text="Получить информацию",
                                                            command=partial(get_information, window_in_system_admin))
             button_get_information_about_users.pack()
 
             window_in_system_admin.mainloop()
-        else:
+        elif (login, password) in list(dict_of_user_information.items()):
+            counter = 0
             lst[2].destroy()
-            messagebox.showinfo(f'USER', f'login: {login}, password: {password}')
+
             window_in_system_user = tk.Tk()
             window_in_system_user.geometry("500x500")
             window_in_system_user.resizable(False, False)
-            window_in_system_user.title("user")
+            window_in_system_user.title(f"user {login}")
             label_user_new_login = tk.Label(window_in_system_user,
                                             text="Если есть желание, поменяйте свои данные для входа в систему")
             label_user_new_login.pack()
@@ -134,9 +155,12 @@ def accounting(lst: list):
             window_in_system_user.mainloop()
 
     else:
+        counter +=1
         lst[2].destroy()
-        messagebox.showinfo('Access denied!', 'НЕ РОК')
-
+        if counter >=3:
+            messagebox.showinfo('ERROR', 'У вас было слишком много попыток войти!')
+            sys.exit()
+        main()
 
 def main():
     window = tk.Tk()
