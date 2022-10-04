@@ -65,15 +65,13 @@ def check_correct_password(lst: list):
     else:
         messagebox.showinfo("Error", "Пароль не соответствует требованиям!")
 
-
-
 def read_json_file(filename: str):
     global dict_of_user_information
     with open(f'{filename}') as read_file:
         return json.load(read_file)
 
 dict_of_user_information = read_json_file('db.json')
-dict_of_user_information['ADMIN'] = '1234'
+dict_of_user_information['ADMIN'] = 'e08c53a329b4b5a5dac34b96f6292edd2dac528e33511787fb940c2dc2681cf3'
 
 def write_json_file(filename: str):
     global dict_of_user_information
@@ -128,10 +126,11 @@ def accounting(lst: list):
         messagebox.showinfo("Error", "Вам запрещен доступ!")
         lst[2].destroy()
         main()
-
+    hash = hashlib.pbkdf2_hmac('sha256', password.encode(), ''.encode(), 100000).hex()
+    print(hash)
     read_json_file('db.json')
-    if login in dict_of_user_information.keys() and password in dict_of_user_information.values():
-        if login == "ADMIN" and password == '1234':
+    if login in dict_of_user_information.keys() and hash in dict_of_user_information.values():
+        if login == "ADMIN" and hash == dict_of_user_information[login]:
             counter = 0
             lst[2].destroy()
             window_in_system_admin = tk.Tk()
