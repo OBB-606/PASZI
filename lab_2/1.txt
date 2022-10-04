@@ -1,0 +1,16 @@
+sudo apt update && apt full-upgrade -y && apt autoclean && apt autoremove -y
+
+sudo apt install flatpak -y
+sudo rm /etc/apt/preferences.d/nosnap.pref
+sudo apt install snap -y && apt install snapd -y
+sudo apt install git -y
+echo "alias uuaa='sudo apt update && apt upgrade -y && apt autoclean && apt autoremove -y'" 
+sudo apt install python3-pip -y
+pip install matplotlib
+pip install numpy
+pip install scipy
+pip install termcolor
+sudo apt install kde5 -y
+flatpak install app/com.visualstudio.code/x86_64/stable -y
+snap install pycharm-community --classic
+
