@@ -1,7 +1,10 @@
+import hashlib
 import os
 import sys
 from random import randint as rd
+import platform
 #Корpеляция - ковариация деленная на произведение стандартных отклонений переменных
+# Коваризация - sum((xi- x среднее)*(yi - y среднее)) / n-1
 
 def write_file_with_binary_mode(filename: str, list_of_bytes: list):
     with open(f'{filename}', 'wb') as write_file:
@@ -35,6 +38,18 @@ def encryption(filename: str):# гаммирование
         key = read_file.read().split()
     return [(list_of_bytes[i] ^ int(key[i])) for i in range(len(list_of_bytes))]
 
+def check_license():
+    pattern_architecture = "x86_64"
+    pattern_os = "Linux"
+    template = hashlib.pbkdf2_hmac('sha256', pattern_os.encode(), pattern_architecture.encode(), 10).hex()
+    architecture = str(platform.uname()[-1])
+    os = str(platform.uname()[0])
+    real_configuration = hashlib.pbkdf2_hmac('sha256', os.encode(), architecture.encode(), 10).hex()
+    print(f"{real_configuration, template}")
+    if real_configuration == template:
+        return True
+    else:
+        return False
 
 def decryption(list_of_bytes: list):
     with open('key.txt', 'r') as read_file:
@@ -55,15 +70,30 @@ def main():
     if question == 'y':
         list_enc = encryption(filename)
         write_file_with_binary_mode(f"enc/{filename}", list_enc)
-        password = input('enter password for decryption: ')
-        if check_password(password):
-            list_dec = decryption(list_enc)
-            write_file_with_binary_mode(f"dec/{filename}",list_dec)
-            open_file_in_system(f"dec/{filename}", True)
-            sys.exit()
+        question_2 = int(input("do you want to use license(1) or password(2)?"))
+        if question_2 == 1:
+            if check_license():
+                list_dec = decryption(list_enc)
+                write_file_with_binary_mode(f"dec/{filename}", list_dec)
+                open_file_in_system(f"dec/{filename}", True)
+                sys.exit()
+            else:
+                print("Incorrect license!")
+                sys.exit()
+        elif question_2 == 2:
+            password = input('enter password for decryption: ')
+            if check_password(password):
+                list_dec = decryption(list_enc)
+                write_file_with_binary_mode(f"dec/{filename}",list_dec)
+                open_file_in_system(f"dec/{filename}", True)
+                sys.exit()
+            else:
+                print("password is wrong! ")
+                sys.exit()
         else:
-            print("password if wrong! ")
+            print('Incorrect data!')
             sys.exit()
+
 
     elif question == 'n':
         open_file_in_system(filename, True)
